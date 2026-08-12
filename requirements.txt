@@ -1,0 +1,6 @@
+# Stage 0 -- CAD geometry audit
+gmsh>=4.12          # ships arm64 wheels with OpenCASCADE built in
+numpy>=1.26
+trimesh>=4.0
+rtree>=1.0          # spatial index backing trimesh's ray queries
+embreex>=2.17       # optional: ~50x faster ray casting for the thickness pass

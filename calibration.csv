@@ -1,0 +1,13 @@
+borderline,part,code,severity,dim,tag,threshold_name,threshold,measured,ratio,verdict,note
+YES,thin_plate,face.sliver,warn,2,1,sliver_circularity,0.05,0.04574135728005720,0.9148,real,
+YES,thin_plate,face.sliver,warn,2,2,sliver_circularity,0.05,0.04574135728005720,0.9148,real,
+YES,thin_plate,face.sliver,warn,2,3,sliver_circularity,0.05,0.04574135728005720,0.9148,real,
+YES,thin_plate,face.sliver,warn,2,4,sliver_circularity,0.05,0.04574135728005720,0.9148,real,
+YES,sliver_block,curve.tiny,warn,1,5,tiny_curve_frac,0.0001,6.50928001849774E-05,0.6509,real,
+YES,sliver_block,curve.tiny,warn,1,6,tiny_curve_frac,0.0001,6.50928001849903E-05,0.6509,real,
+YES,sliver_block,curve.tiny,warn,1,16,tiny_curve_frac,0.0001,6.50928001849774E-05,0.6509,real,
+YES,sliver_block,curve.tiny,warn,1,17,tiny_curve_frac,0.0001,6.50928001849903E-05,0.6509,real,
+,sphere,curve.degenerate,info,1,2,degenerate_curve_frac,1E-09,1.11063178544826E-16,1.111E-07,,
+,sphere,curve.degenerate,info,1,3,degenerate_curve_frac,1E-09,1.11063178544826E-16,1.111E-07,,
+,sliver_block,face.sliver,warn,2,7,sliver_circularity,0.05,0.00031409644292942900,0.006282,real,
+,sliver_block,face.sliver,warn,2,8,sliver_circularity,0.05,0.0003140964429293670,0.006282,real,

@@ -1,0 +1,23 @@
+# Stage 0 threshold overrides. Pass with --config thresholds.toml
+#
+# Keep this file in version control next to calibration.csv. The pair is the
+# audit trail: the numbers you accepted, and the labelled evidence behind them.
+# Unknown keys are rejected loudly, so a typo cannot silently do nothing.
+#
+# Run `python -m tools.calibrate fit calibration.csv` for proposed values.
+
+[thresholds]
+# --- geometry audit ---
+# tiny_curve_frac      = 1e-4    # curve length / model scale
+# sliver_circularity   = 5e-2    # 4*pi*A/P^2; default cut is about 60:1 aspect
+# tiny_face_area_frac  = 1e-7    # area / model scale^2
+
+# --- parametrization ---
+# distortion_ratio_warn = 100.0
+# anisotropy_warn       = 20.0
+
+# --- reference 1D discretization ---
+# reference_size_frac  = 0.04
+
+# --- thickness guard ---
+# min_elements_through_thickness = 3

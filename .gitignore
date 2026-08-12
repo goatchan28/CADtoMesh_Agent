@@ -1,0 +1,14 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Stage 0 reports
+out/*
+!out/.gitkeep
+
+# CAD input. Whitelist, not blacklist -- a missed extension would leak
+# proprietary geometry into the repo. The synthetic corpus is reproducible
+# via `python -m tools.make_test_parts models/`, so none of it needs committing.
+models/*
+!models/.gitkeep
