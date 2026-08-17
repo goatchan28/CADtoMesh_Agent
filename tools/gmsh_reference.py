@@ -6,12 +6,12 @@ Black box, strictly
 Gmsh is used only through its public meshing API: build geometry, set a size, call
 generate(2), read the resulting nodes and triangles. Its meshing algorithms are not
 inspected, ported, or consulted, and nothing here informs the three implementations
-in stage1/. The purpose is a yardstick -- "how far off production quality are we" --
+in research/. The purpose is a yardstick -- "how far off production quality are we" --
 not a source.
 
 Gmsh generates its OWN 1D discretization
 ----------------------------------------
-This is a deliberate asymmetry and it must be reported as one. The three stage1
+This is a deliberate asymmetry and it must be reported as one. The three research
 meshers all receive one identical FaceBoundary, which is what makes THEIR mutual
 comparison fair. Gmsh instead does what it would do in production: choose its own
 boundary node placement from the size field.
@@ -43,7 +43,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-from stage1.quality import SurfaceMesh
+from quality.core import SurfaceMesh
 
 R = 10.0
 
@@ -127,7 +127,7 @@ def _build_sphere_patch(gmsh, surface, poly):
 
 # case -> builder(gmsh, analytic_surface, uv_polygon). The polygon and surface come
 # from tools.compare_meshers.CASES, so the reference geometry is derived from the
-# very same definition the three stage1 meshers use.
+# very same definition the three research meshers use.
 BUILDERS = {
     "plane": _build_plane,
     "lshape": _build_plane,
@@ -149,7 +149,7 @@ def mesh_case(case: str, target: float, surface, poly, *, algorithm: int = 6,
         poly: the uv polygon defining the patch extent.
         algorithm: Mesh.Algorithm, passed through unmodified.
         curvature_adapt: Mesh.MeshSizeFromCurvature. Default 0 -- UNIFORM sizing,
-            matching what the three stage1 meshers do. Leaving gmsh's curvature
+            matching what the three research meshers do. Leaving gmsh's curvature
             adaptation on would let it spend elements where they help chordal
             accuracy, which is a genuinely better production strategy but would
             compare a size-adaptive mesher against three uniform ones. Set it
@@ -194,7 +194,7 @@ def mesh_case(case: str, target: float, surface, poly, *, algorithm: int = 6,
                 tris.extend([[index[int(v)] for v in row] for row in arr])
 
         # How many nodes gmsh chose to put on the boundary curves. Printed so the
-        # 1D asymmetry against the stage1 meshers is explicit rather than hidden.
+        # 1D asymmetry against the research meshers is explicit rather than hidden.
         bnd_nodes: set[int] = set()
         for _, ctag in gmsh.model.getBoundary([(2, s) for s in surfaces],
                                               combined=True, oriented=False):

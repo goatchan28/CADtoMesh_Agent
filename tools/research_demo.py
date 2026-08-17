@@ -1,9 +1,9 @@
 """
 Stage 1 demo: mesh known analytic surfaces, print quality, export for viewing.
 
-    python -m tools.stage1_demo --case all
-    python -m tools.stage1_demo --case cylinder --target 1.0
-    python -m tools.stage1_demo --case cylinder --target 1.0 --no-linearize
+    python -m tools.research_demo --case all
+    python -m tools.research_demo --case cylinder --target 1.0
+    python -m tools.research_demo --case cylinder --target 1.0 --no-linearize
 
 Writes TWO views per case, both with zero extra dependencies:
 
@@ -28,11 +28,11 @@ from pathlib import Path
 
 import numpy as np
 
-from stage1 import quality as Q
-from stage1.boundary import (FaceBoundary, Loop, boundary_from_uv_polygon,
+from quality import core as Q
+from research.boundary import (FaceBoundary, Loop, boundary_from_uv_polygon,
                              orient_loops, resample_uv_polygon)
-from stage1.cdt_parametric import triangulate
-from stage1.surface import CylinderSurface, PlaneSurface, SphereSurface
+from research.cdt_parametric import triangulate
+from research.surface import CylinderSurface, PlaneSurface, SphereSurface
 
 
 # ---------------------------------------------------------------------------

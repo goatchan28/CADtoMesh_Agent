@@ -44,6 +44,9 @@ def import_cad(path: str, *, tolerance: float | None = None,
 
     Caller owns gmsh.initialize()/finalize().
     """
+    from backends.base import check_cad_format
+    check_cad_format(path)      # named error before OCC sees an unreadable file
+
     if tolerance is not None:
         gmsh.option.setNumber("Geometry.Tolerance", tolerance)
 

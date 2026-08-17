@@ -43,7 +43,7 @@ from .af_core import (AFConfig, AFStats, Front, apex_height, order_candidates,
                       triangle_is_valid_2d)
 from .boundary import FaceBoundary
 from .cdt_parametric import winding_number
-from .quality import SurfaceMesh
+from quality.core import SurfaceMesh
 
 
 @dataclass

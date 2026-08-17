@@ -39,7 +39,7 @@ import numpy as np
 from .boundary import FaceBoundary
 from .metric import MetricField, cholesky_frame, metric_distance
 from .predicates import circumcenter, incircle, orient2d, point_in_triangle
-from .quality import SurfaceMesh
+from quality.core import SurfaceMesh
 
 
 # ---------------------------------------------------------------------------

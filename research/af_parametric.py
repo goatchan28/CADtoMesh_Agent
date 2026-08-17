@@ -34,7 +34,7 @@ from .af_core import (AFConfig, AFStats, Front, ideal_apex_2d,
 from .boundary import FaceBoundary
 from .cdt_parametric import winding_number
 from .metric import MetricField, cholesky_frame
-from .quality import SurfaceMesh
+from quality.core import SurfaceMesh
 
 
 @dataclass

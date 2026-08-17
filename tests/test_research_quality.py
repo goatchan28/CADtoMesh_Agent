@@ -13,10 +13,10 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import numpy as np
 
-from stage1 import quality as Q
-from stage1.boundary import boundary_from_uv_polygon, resample_uv_polygon
-from stage1.cdt_parametric import triangulate
-from stage1.surface import CylinderSurface, PlaneSurface, SphereSurface
+from quality import core as Q
+from research.boundary import boundary_from_uv_polygon, resample_uv_polygon
+from research.cdt_parametric import triangulate
+from research.surface import CylinderSurface, PlaneSurface, SphereSurface
 
 PLANE = PlaneSurface()
 

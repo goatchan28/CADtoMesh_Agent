@@ -41,12 +41,12 @@ from pathlib import Path
 
 import numpy as np
 
-from stage1 import af_direct3d as AF3
-from stage1 import af_parametric as AFP
-from stage1 import cdt_parametric as CDT
-from stage1 import quality as Q
-from stage1.boundary import boundary_from_uv_polygon, resample_uv_polygon
-from stage1.surface import CylinderSurface, PlaneSurface, SphereSurface
+from research import af_direct3d as AF3
+from research import af_parametric as AFP
+from research import cdt_parametric as CDT
+from quality import core as Q
+from research.boundary import boundary_from_uv_polygon, resample_uv_polygon
+from research.surface import CylinderSurface, PlaneSurface, SphereSurface
 
 R = 10.0
 
@@ -140,7 +140,7 @@ def report(case: str, target: float, outdir: Path | None, want_svg: bool,
 
         if outdir is not None:
             outdir.mkdir(parents=True, exist_ok=True)
-            from tools.stage1_demo import write_stl, write_uv_svg
+            from tools.research_demo import write_stl, write_uv_svg
             write_stl(r.mesh, outdir / f"{case}__{name}.stl", f"{case}_{name}")
             if want_svg and getattr(r, "uv", None) is not None and len(r.uv):
                 write_uv_svg(r.uv, r.mesh, outdir / f"{case}__{name}.svg")
@@ -182,7 +182,7 @@ def _gmsh_section(case, surface, poly, exact, t, algos, curvature_adapt, outdir)
                   gr.n_boundary_nodes, "n/a")
         if outdir is not None:
             outdir.mkdir(parents=True, exist_ok=True)
-            from tools.stage1_demo import write_stl
+            from tools.research_demo import write_stl
             write_stl(gr.mesh, outdir / f"{case}__gmsh_algo{algo}.stl",
                       f"{case}_gmsh{algo}")
 

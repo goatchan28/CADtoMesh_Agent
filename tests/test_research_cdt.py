@@ -15,13 +15,13 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import numpy as np
 
-from stage1 import quality as Q
-from stage1.boundary import (Loop, boundary_from_uv_polygon, orient_loops,
+from quality import core as Q
+from research.boundary import (Loop, boundary_from_uv_polygon, orient_loops,
                              resample_uv_polygon, FaceBoundary)
-from stage1.cdt_parametric import (Triangulation, recover_constraints,
+from research.cdt_parametric import (Triangulation, recover_constraints,
                                    super_triangle, triangulate, winding_number)
-from stage1.metric import MetricField
-from stage1.surface import CylinderSurface, PlaneSurface, SphereSurface
+from research.metric import MetricField
+from research.surface import CylinderSurface, PlaneSurface, SphereSurface
 
 PLANE = PlaneSurface()
 
@@ -80,7 +80,7 @@ def test_triangulation_enforces_ccw():
     tri = Triangulation([(0.0, 0.0), (1.0, 0.0), (0.0, 1.0)])
     tid = tri.add_triangle(0, 2, 1)          # given clockwise
     a, b, c = tri.tris[tid]
-    from stage1.predicates import orient2d
+    from research.predicates import orient2d
     assert orient2d(tri.pts[a], tri.pts[b], tri.pts[c]) > 0
 
 

@@ -12,3 +12,29 @@ out/*
 # via `python -m tools.make_test_parts models/`, so none of it needs committing.
 models/*
 !models/.gitkeep
+
+# macOS
+.DS_Store
+
+# Tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.pyo
+*.egg-info/
+
+# uv
+uv.lock
+
+# macOS
+.DS_Store
+
+# Tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.pyo
+*.egg-info/
+
+# uv
+uv.lock

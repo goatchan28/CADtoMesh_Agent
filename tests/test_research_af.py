@@ -18,14 +18,14 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import numpy as np
 
-from stage1 import af_direct3d as AF3
-from stage1 import af_parametric as AFP
-from stage1 import quality as Q
-from stage1.af_core import (AFConfig, Front, SpatialHash, apex_height,
+from research import af_direct3d as AF3
+from research import af_parametric as AFP
+from quality import core as Q
+from research.af_core import (AFConfig, Front, SpatialHash, apex_height,
                             ideal_apex_2d, left_normal_2d, order_candidates,
                             shape_quality_2d)
-from stage1.boundary import boundary_from_uv_polygon, resample_uv_polygon
-from stage1.surface import CylinderSurface, PlaneSurface, SphereSurface
+from research.boundary import boundary_from_uv_polygon, resample_uv_polygon
+from research.surface import CylinderSurface, PlaneSurface, SphereSurface
 
 PLANE = PlaneSurface()
 SQUARE = [(0, 0), (1, 0), (1, 1), (0, 1)]
@@ -204,7 +204,7 @@ def test_af_element_count_is_near_ideal():
 
 def test_af_mean_shape_beats_cdt_on_a_plane():
     """AF's characteristic strength: better AVERAGE interior quality."""
-    from stage1.cdt_parametric import triangulate
+    from research.cdt_parametric import triangulate
     fb = _bnd(PLANE, SQUARE, 0.15)
     cdt = Q.evaluate(triangulate(fb, PLANE).mesh)
     for name, r in (("parametric_af", AFP.mesh_face(fb, PLANE)),

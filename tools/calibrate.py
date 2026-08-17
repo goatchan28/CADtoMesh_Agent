@@ -60,35 +60,55 @@ threshold actually decided. Those are the rows worth labelling first: a finding
 three orders of magnitude clear of its cut tells you nothing about the cut."""
 
 
+def _iter_reports(jf: Path):
+    """Yield Stage 0 report dicts from a JSON file, whatever its top-level shape.
+
+    An output directory holds more than one kind of artifact: Stage 0 writes a
+    single report OBJECT, while run records are a LIST of records. Assuming dicts
+    crashed the whole collection on the first run record it met, which on a real
+    corpus is immediately.
+    """
+    try:
+        data = json.loads(jf.read_text())
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        print(f"  skipping unparseable {jf.name}")
+        return
+    for item in (data if isinstance(data, list) else [data]):
+        if isinstance(item, dict) and "findings" in item:
+            yield item
+
+
 def collect(report_dir: Path) -> list[dict]:
     rows: list[dict] = []
+    n_files = n_reports = 0
     for jf in sorted(report_dir.glob("*.json")):
-        try:
-            rep = json.loads(jf.read_text())
-        except json.JSONDecodeError:
-            print(f"  skipping unparseable {jf.name}")
-            continue
-        part = Path(rep.get("source_path", jf.stem)).stem
-        for f in rep.get("findings", []):
-            if not f.get("threshold_name"):
-                continue          # not threshold-driven, nothing to calibrate
-            thr, meas = f.get("threshold"), f.get("measured")
-            ratio = (meas / thr) if (thr not in (None, 0) and meas is not None) else ""
-            border = (ratio != "" and 1.0 / BORDERLINE_FACTOR <= ratio <= BORDERLINE_FACTOR)
-            rows.append({
-                "borderline": "YES" if border else "",
-                "part": part,
-                "code": f.get("code", ""),
-                "severity": f.get("severity", ""),
-                "dim": f.get("dim", ""),
-                "tag": f.get("tag", ""),
-                "threshold_name": f["threshold_name"],
-                "threshold": thr,
-                "measured": meas,
-                "ratio": f"{ratio:.4g}" if ratio != "" else "",
-                "verdict": "",
-                "note": "",
-            })
+        n_files += 1
+        for rep in _iter_reports(jf):
+            n_reports += 1
+            part = Path(rep.get("source_path", jf.stem)).stem
+            for f in rep.get("findings", []):
+                if not f.get("threshold_name"):
+                    continue          # not threshold-driven, nothing to calibrate
+                thr, meas = f.get("threshold"), f.get("measured")
+                ratio = (meas / thr) if (thr not in (None, 0) and meas is not None) else ""
+                border = (ratio != "" and 1.0 / BORDERLINE_FACTOR <= ratio <= BORDERLINE_FACTOR)
+                rows.append({
+                    "borderline": "YES" if border else "",
+                    "part": part,
+                    "code": f.get("code", ""),
+                    "severity": f.get("severity", ""),
+                    "dim": f.get("dim", ""),
+                    "tag": f.get("tag", ""),
+                    "threshold_name": f["threshold_name"],
+                    "threshold": thr,
+                    "measured": meas,
+                    "ratio": f"{ratio:.4g}" if ratio != "" else "",
+                    "verdict": "",
+                    "note": "",
+                })
+    if n_files and not rows:
+        print(f"  read {n_files} file(s), {n_reports} Stage 0 report(s), "
+              "but no threshold-bearing findings")
     return rows
 
 

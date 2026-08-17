@@ -14,12 +14,12 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import numpy as np
 
-from stage1.predicates import (circumcenter, incircle, orient2d,
+from research.predicates import (circumcenter, incircle, orient2d,
                               point_in_triangle, segments_properly_intersect)
-from stage1.metric import (MetricField, anisotropy, cholesky_frame, is_degenerate,
+from research.metric import (MetricField, anisotropy, cholesky_frame, is_degenerate,
                            metric_distance, metric_tensor,
                            parametric_step_for_length)
-from stage1.surface import CylinderSurface, PlaneSurface, SphereSurface
+from research.surface import CylinderSurface, PlaneSurface, SphereSurface
 
 
 # --------------------------------------------------------------------------

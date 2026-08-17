@@ -4,3 +4,4 @@ numpy>=1.26
 trimesh>=4.0
 rtree>=1.0          # spatial index backing trimesh's ray queries
 embreex>=2.17       # optional: ~50x faster ray casting for the thickness pass
+scipy>=1.11        # KD-tree for ramp-aware size-field scoring (trimesh pulls it anyway)

@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import numpy as np
 
-from stage1.surface import CylinderSurface, PlaneSurface, SphereSurface
+from research.surface import CylinderSurface, PlaneSurface, SphereSurface
 
 R = 10.0
 
@@ -164,7 +164,7 @@ def test_node_tags_are_remapped_not_used_as_indices():
         assert r.mesh.triangles.max() == 3, r.mesh.triangles
         assert r.mesh.triangles.min() == 0
         # The two triangles must tile the unit square: total area 1.0.
-        from stage1 import quality as Q
+        from quality import core as Q
         a, b, c = r.mesh.corners()
         assert abs(float(Q.triangle_areas(a, b, c).sum()) - 1.0) < 1e-12
     _with_stub(body)

@@ -161,6 +161,11 @@ class QualityReport:
     n_boundary_edges: int | None = None
     n_nonmanifold_edges: int | None = None
     n_inconsistent_normals: int | None = None
+    n_interface_triangles: int = 0
+    boundary_length: float = 0.0
+    """Triangles excluded from the topology checks as internal assembly walls.
+    Present because evaluate() splats topology_checks()'s dict straight into this
+    report, so the two must stay in step."""
     # optional extras filled in by callers
     max_deviation: float | None = None
     mean_deviation: float | None = None
@@ -213,17 +218,39 @@ def evaluate(mesh: SurfaceMesh, n_worst: int = 20) -> QualityReport:
     )
 
 
-def topology_checks(mesh: SurfaceMesh) -> dict:
+def topology_checks(mesh: SurfaceMesh,
+                    interface_triangles=None) -> dict:
     """Watertightness, manifoldness, normal consistency. Pure.
 
     A CAD-derived surface mesh should be closed: every edge shared by exactly two
     triangles, and the two traversals of each shared edge in OPPOSITE directions
     (consistent orientation).
+
+    interface_triangles: indices of triangles lying on INTERNAL faces of an
+    imprinted assembly. When given, all checks run on the EXTERIOR SKIN with those
+    triangles excluded.
+
+    Without this, a correctly imprinted assembly fails. After fragment(), the
+    shared face between two solids is a real face inside the material; every edge
+    bounding it touches three faces (the interface plus one from each body), so
+    three triangles meet there. Measured on two_blocks.step: 30 "non-manifold"
+    edges and not watertight, on a mesh that is exactly right.
+
+    This is the same distinction Stage 0 had to make between a seam edge and a free
+    edge -- count incidences against known structure rather than applying a blanket
+    rule. Excluding interface triangles from the COUNT (while leaving them in the
+    mesh, since volume meshing needs them) restores 2 per edge on the skin.
     """
     t = mesh.triangles
+    if interface_triangles:
+        keep = np.ones(len(t), dtype=bool)
+        keep[np.asarray(sorted(interface_triangles), dtype=np.int64)] = False
+        t = t[keep]
     if len(t) == 0:
         return {"is_watertight": False, "n_boundary_edges": 0,
-                "n_nonmanifold_edges": 0, "n_inconsistent_normals": 0}
+                "n_nonmanifold_edges": 0, "n_inconsistent_normals": 0,
+                "n_interface_triangles": len(interface_triangles or ()),
+                "boundary_length": 0.0}
 
     directed = np.concatenate([t[:, [0, 1]], t[:, [1, 2]], t[:, [2, 0]]], axis=0)
     undirected = np.sort(directed, axis=1)
@@ -233,6 +260,18 @@ def topology_checks(mesh: SurfaceMesh) -> dict:
 
     n_boundary = int(np.sum(counts == 1))
     n_nonmanifold = int(np.sum(counts > 2))
+
+    # Physical length of the open boundary. The COUNT depends on element size; the
+    # length does not, so only the length can be compared against a CAD expectation.
+    boundary_length = 0.0
+    if n_boundary and len(mesh.vertices):
+        once = np.where(counts == 1)[0]
+        pos = {int(e): i for i, e in enumerate(np.unique(inv))}
+        sel = np.isin(inv, once)
+        seg = undirected[sel]
+        if len(seg):
+            d = mesh.vertices[seg[:, 0]] - mesh.vertices[seg[:, 1]]
+            boundary_length = float(np.linalg.norm(d, axis=1).sum())
 
     # Orientation: for each edge used exactly twice, the two directed uses must
     # differ. If they match, the two triangles disagree on which way is out.
@@ -255,6 +294,8 @@ def topology_checks(mesh: SurfaceMesh) -> dict:
         "n_boundary_edges": n_boundary,
         "n_nonmanifold_edges": n_nonmanifold,
         "n_inconsistent_normals": inconsistent,
+        "n_interface_triangles": len(interface_triangles or ()),
+        "boundary_length": boundary_length,
     }
 
 
@@ -314,7 +355,7 @@ def chordal_deviation(mesh: SurfaceMesh, surface, *, target_size: float | None =
 
     Args:
         surface: anything with .project(xyz) -> (closest_xyz, uv). The Surface
-            protocol from stage1.surface; analytic implementations are exact.
+            protocol from research.surface; analytic implementations are exact.
         target_size: if given, max_relative = max_deviation / target_size. A
             chordal error of 0.1 mm means nothing without knowing whether the
             elements are 1 mm or 100 mm.
