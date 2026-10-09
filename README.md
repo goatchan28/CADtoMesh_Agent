@@ -1,224 +1,206 @@
-# CADtoMesh_Agent
+# CAD-to-Mesh: Automated Mesh Generation for Engineering Simulations
 
-**Automated CAD → simulation-ready surface mesh.** Takes difficult CAD geometry and
-produces a validated surface mesh, iterating on meshing parameters until explicitly
-defined simulation-readiness criteria are met — or stopping and explaining why.
+Turning a 3D CAD model into a mesh suitable for engineering simulations can be a complicated, time-consuming process. Engineers often need to manually adjust meshing parameters, inspect the results, and repeat the process until the mesh meets their requirements.
 
-> ### 📄 [**RESEARCH.md**](RESEARCH.md) — methodology, experiments, results, failure analysis, and limitations
-> Start there for the research narrative: the three surface meshers we built and
-> measured, why we pivoted to Gmsh, what the ABC-dataset evaluation showed, and
-> what does not yet work. This README is the code tour.
+**This project automates that process.**
+
+Given a CAD model, the system analyzes its geometry, generates a surface mesh using Gmsh, evaluates the mesh's quality, and automatically adjusts its approach until the mesh meets predefined simulation-readiness criteria.
+
+Instead of requiring an engineer to manually troubleshoot every failed mesh, the system attempts to resolve issues on its own and explains when human intervention is necessary.
+
+## How It Works
+
+```text
+       3D CAD Model
+            |
+            v
+     Analyze Geometry
+            |
+            v
+    Generate Surface Mesh
+            |
+            v
+     Evaluate Mesh Quality
+            |
+       +----+----+
+       |         |
+      Pass      Fail
+       |         |
+       v         v
+    Export    Adjust Meshing
+     Mesh       Parameters
+                 |
+                 +----> Retry
+```
+
+The system follows five main steps:
+
+1. **Import CAD:** Accepts 3D CAD files in STEP format and checks the geometry for potential issues.
+2. **Analyze Geometry:** Examines features such as curvature, wall thickness, and topology to determine appropriate meshing parameters.
+3. **Generate Mesh:** Uses Gmsh to convert the CAD geometry into a triangular surface mesh.
+4. **Evaluate and Improve:** Checks mesh quality, identifies problems, and automatically adjusts meshing parameters to improve the result.
+5. **Export Results:** Saves the validated mesh as `.msh` and `.stl` files, along with a report explaining the results.
+
+If the system cannot produce an acceptable mesh, it stops and explains why rather than silently returning an unusable result.
 
 ---
 
-## What it does, and what it does not
+## Project Results
 
-**Goal.** Produce the best simulation-ready surface mesh possible from difficult
-CAD, using mature meshing tools where appropriate.
+The system has been evaluated on both synthetic CAD models and models from the ABC dataset.
 
-**Not the goal.** Novel meshing algorithms, or replacing Gmsh. Gmsh is used as a
-black box; the contribution is the intelligence around it.
+| Metric | Result |
+|---|---|
+| Synthetic CAD models | 6/6 successfully resolved |
+| ABC dataset evaluations | 46 |
+| Meshes meeting all acceptance criteria | 25 |
+| Valid meshes below quality targets | 13 |
+| Meshes exceeding element budget | 6 |
+| Cases requiring human intervention | 2 |
+| Silent failures | 0 |
 
-**Scope.** Surface meshing only. Volume meshing, boundary conditions and solver
-integration are out of scope for this stage.
+The evaluation covered CAD models ranging from 1 to 894 faces and spanning a 3,700× difference in geometric scale.
 
-**No LLM anywhere.** Geometry, meshing, metrics and acceptance are all
-deterministic. `pipeline/policy.LLMSelector` reserves a seam for a future agent and
-is intentionally unimplemented — an agent would choose *among* validated candidate
-actions, never decide whether a mesh is acceptable.
+**Current limitation:** Some geometries produce poorly shaped triangles that cannot be fixed by adjusting mesh sizing alone. Improving element shape on difficult CAD surfaces remains an open research problem.
+
+For detailed experiments, evaluation results, and failure analysis, see [RESEARCH.md](RESEARCH.md).
 
 ---
 
-## Quick start
+## Research Direction
 
-Everything runs through one script:
+This project is part of my undergraduate research at Columbia University.
+
+The broader research goal is to develop an **AI agent capable of automating the process of converting raw 3D geometry into simulation-ready models**.
+
+The current implementation focuses on building a reliable, deterministic meshing pipeline. It uses Gmsh for mesh generation and rule-based logic to evaluate results and adjust parameters.
+
+**LLM integration is planned but not yet implemented.** Future work will explore using an AI agent to select meshing strategies and troubleshoot failures while preserving deterministic quality checks.
+
+---
+
+## Getting Started
+
+### Installation
+
+Clone the repository and install the required dependencies:
 
 ```bash
 chmod +x run.sh
-./run.sh setup            # .venv + dependencies (uses uv when installed)
-source .venv/bin/activate
-./run.sh all              # generate parts -> audit -> mesh -> report
-./run.sh view block_hole  # open the result in Gmsh
+./run.sh setup
 ```
 
-`setup` uses [uv](https://github.com/astral-sh/uv) if it is on your PATH and
-falls back to `venv` + `pip` otherwise. Either way it produces an ordinary
-`.venv`, which `run.sh` activates for you on every invocation — no manual
-`source` needed. `PYTHON=3.12 ./run.sh setup` pins the interpreter, and
-`./run.sh sync` makes the venv match `requirements.txt` exactly.
+The setup script creates a Python virtual environment and installs the necessary packages.
 
-`./run.sh help` lists every command. The most useful ones:
-
-| command | what it does |
-|---|---|
-| `./run.sh test` | 300 tests, no Gmsh required, about a second |
-| `./run.sh doctor` | check python, uv, Gmsh, packages, models |
-| `./run.sh stage0 <cad>` | geometry audit only — fast triage, no meshing |
-| `./run.sh mesh <cad>` | full adaptive pipeline, writes `.msh` + `.stl` + manifest |
-| `./run.sh corpus <dir> -j 6` | many files: resumable, parallel, per-file timeout |
-| `./run.sh log [part]` | what a run did: iterations, actions, rationale (`--failed`, `--raw`) |
-| `./run.sh report` | aggregate an existing run |
-| `./run.sh compare` | the three research meshers vs Gmsh |
-
-Options include `-b/--budget`, `-i/--iterations`, `-t/--timeout`, `-j/--jobs`,
-`--fidelity`, `--heal`, and `-n/--dry-run` to print the commands instead of
-running them. If no files are given, commands default to `models/`.
-
-Prefer the modules directly? Every command is a thin wrapper:
+### Run the Full Pipeline
 
 ```bash
-python -m tools.run_pipeline models/*.step --out out/meshes --json out/run.json
+./run.sh all
 ```
+
+This generates test CAD models, analyzes their geometry, creates meshes, and produces a report.
+
+### Mesh Your Own CAD Model
+
+```bash
+./run.sh mesh path/to/model.step
+```
+
+The system will analyze the CAD model, generate a surface mesh, evaluate its quality, and attempt improvements when necessary.
+
+### View a Generated Mesh
+
+```bash
+./run.sh view block_hole
+```
+
+Opens the generated mesh in Gmsh for visualization.
+
+### Other Commands
+
+| Command | Description |
+|---|---|
+| `./run.sh test` | Run the 300 automated tests |
+| `./run.sh doctor` | Check dependencies and environment |
+| `./run.sh stage0 <cad>` | Analyze CAD geometry without generating a mesh |
+| `./run.sh mesh <cad>` | Run the complete adaptive meshing pipeline |
+| `./run.sh corpus <dir> -j 6` | Process multiple CAD models in parallel |
+| `./run.sh log` | Review previous runs and meshing decisions |
+| `./run.sh report` | Generate an evaluation report |
+| `./run.sh compare` | Compare experimental meshing algorithms with Gmsh |
+
+Run `./run.sh help` for the complete list of available commands.
 
 ---
 
-## Repository layout
+## Technical Architecture
 
-```
-stage0/      CAD geometry audit — deterministic measurement, no search
-quality/     mesh evaluation — the arbiter; imports no gmsh
-backends/    meshing backends — gmsh production path (black box)
-pipeline/    entity IDs, size field, policy, loop, contracts, export
-research/    three from-scratch meshers — reference only, not production
-tools/       CLI drivers: verification, calibration, corpus runner
-docs/        architecture notes and research takeaways
-tests/       300 tests, all runnable without gmsh
-```
+The system is organized into several modules:
 
-| package | lines | role |
+| Module | Purpose |
+|---|---|
+| `stage0/` | Analyzes CAD geometry and identifies potential issues |
+| `quality/` | Evaluates mesh validity, quality, and geometric accuracy |
+| `backends/` | Interfaces with Gmsh to generate meshes |
+| `pipeline/` | Manages meshing parameters, iteration, and decision-making |
+| `research/` | Contains three experimental meshing algorithms developed during the research |
+| `tools/` | Provides command-line utilities and evaluation tools |
+| `tests/` | Contains 300 automated tests |
+
+### Design Principles
+
+**1. Use established meshing tools.**
+
+Rather than reinventing mesh generation, the production pipeline uses Gmsh. The research focuses on automating the decisions surrounding mesh generation.
+
+**2. Never accept an invalid mesh.**
+
+Every generated mesh must pass explicit validity checks. A high quality score cannot compensate for fundamental geometric problems.
+
+**3. Preserve the original geometry.**
+
+The system tracks CAD surfaces throughout the meshing process to ensure important geometric features are not accidentally lost or modified.
+
+**4. Make decisions traceable.**
+
+Every iteration records what the system changed, why it made that change, and whether the resulting mesh improved.
+
+**5. Know when to stop.**
+
+If the system cannot satisfy its acceptance criteria, it reports the problem rather than continuing indefinitely or returning a misleading result.
+
+---
+
+## Supported Formats
+
+| Format | Extensions | Status |
 |---|---|---|
-| [`pipeline/`](pipeline) | 2,791 | the intelligence layer — identity, sizing, policy, loop, contracts |
-| [`tools/`](tools) | 2,318 | CLI drivers and verification harnesses |
-| [`research/`](research) | 2,227 | Parametric CDT, Parametric AF, Direct 3D AF — reference only |
-| [`stage0/`](stage0) | 1,375 | geometry audit |
-| [`quality/`](quality) | 1,166 | backend-independent mesh evaluation |
-| [`backends/`](backends) | 1,066 | gmsh backend, CAD surface adapter |
-| [`tests/`](tests) | 5,011 | 300 tests |
+| STEP | `.step`, `.stp` | Fully supported and tested |
+| IGES | `.iges`, `.igs` | Accepted, not extensively tested |
+| BREP | `.brep` | Accepted, not extensively tested |
+
+The pipeline currently generates **surface meshes only**. Volume meshing, boundary conditions, and integration with simulation solvers are outside the scope of this stage.
 
 ---
 
-## The pipeline
+## Documentation
 
-```
-  STEP / IGES / BREP
-        │
-        ▼
-  IMPORT + HEAL ──▶ persistent CAD entity IDs (survive healing and imprinting)
-        ▼
-  ANALYZE ────────▶ curvature, wall thickness, topology + feature contracts
-        ▼
-  SIZE FIELD ─────▶ declarative typed rules, scoped to entity IDs
-        ▼
-  MESH (gmsh) ────▶ surface mesh + per-triangle CAD face provenance
-        ▼
-  EVALUATE ───────▶ validity gate + objective scores + contract check
-        │
-        ├── ready? ────▶ EXPORT  .msh + .stl + manifest + run record
-        ▼
-  ADAPT ──────────▶ one action from a closed set, with recorded evidence
-        └──────────▶ back to SIZE FIELD or MESH
-```
+For more detailed technical information:
 
-### Where to start reading
-
-| if you want to understand… | read |
-|---|---|
-| what "a good mesh" means here | [`quality/criteria.py`](quality/criteria.py) — the validity gate vs objective score split |
-| how the loop decides what to change | [`pipeline/policy.py`](pipeline/policy.py) — the closed action set |
-| how CAD identity survives healing | [`pipeline/entities.py`](pipeline/entities.py) — fingerprints + provenance graph |
-| how sizing is expressed | [`pipeline/sizefield.py`](pipeline/sizefield.py) — declarative rules |
-| how the mesh is checked against the CAD | [`pipeline/contracts.py`](pipeline/contracts.py) — topology + feature contracts |
-| the from-scratch meshers | [`research/`](research) and [`docs/research_takeaways.md`](docs/research_takeaways.md) |
+- [RESEARCH.md](RESEARCH.md) — Research methodology, experiments, results, and limitations.
+- [Architecture Notes](docs/) — System architecture and implementation details.
+- [Research Takeaways](docs/research_takeaways.md) — Findings from developing and comparing different meshing algorithms.
 
 ---
 
-## Key design decisions
+## Technologies
 
-**The validity gate is separate from the objective score.** Hard failures
-(inverted elements, non-manifold topology) make a mesh unusable — no score redeems
-them and no refinement fixes them, so the response is a *strategy change*.
-Objectives (shape, size, gradation, fidelity) are continuous and drive iteration.
-`Verdict.score` is `0.0` when invalid, so a search can never trade validity for a
-better average.
+**Language:** Python 3.12
 
-**Thresholds are fractions of model scale, never absolute.** Validated across a
-**3,700× scale range** in the ABC corpus with no per-part configuration.
+**Meshing & Geometry:** Gmsh, OpenCASCADE, Trimesh
 
-**`quality/` imports no Gmsh.** One evaluator scores the production backend and the
-research meshers alike, so a comparison between them measures algorithms rather
-than normalization differences.
+**Scientific Computing:** NumPy, SciPy
 
-**CAD entity IDs are persistent.** OCC tags change across healing, imprinting and
-re-import. `pipeline/entities.py` fingerprints scale-normalized geometric
-invariants and maintains a provenance graph (SAME / SPLIT / MERGE / CREATED /
-DELETED), so evidence gathered in iteration 3 still refers to the same face in
-iteration 7.
+**Testing:** Pytest
 
-**Healing is opt-in and must be approved.** Forcing repair on import destroys valid
-geometry. And when healing *does* remove a face, that removal is a contract
-violation until approved — automatically if the face was shaped like a sliver,
-explicitly otherwise.
-
----
-
-## Input formats
-
-| format | extensions | status |
-|---|---|---|
-| STEP | `.step` `.stp` | primary path; everything is tested on it |
-| IGES | `.iges` `.igs` | accepted, untested |
-| BREP | `.brep` | accepted, untested |
-
-Mesh formats (STL, OBJ, PLY) and native CAD (`.sldprt`, `.x_t`, `.sat`) are
-rejected with a named error before OpenCASCADE is invoked. Mesh formats are refused
-on principle, not for lack of a reader: entity identity, per-face sizing and the
-contracts are all keyed to CAD faces, which a triangle soup does not have.
-
----
-
-## Tools
-
-| command | purpose |
-|---|---|
-| `python -m tools.run_pipeline <cad>` | full adaptive pipeline with export |
-| `python -m tools.corpus <dir> -j 6` | corpus runner: resumable, parallel, per-file timeout, aggregated |
-| `python -m stage0.run <cad>` | geometry audit only |
-| `python -m tools.verify_backend <cad>` | single-shot mesh, no adaptation — calibration numbers |
-| `python -m tools.verify_entity_ids <cad>` | entity ID stability across heal / imprint / re-import |
-| `python -m tools.verify_gmsh_api <cad>` | known-answer checks on Gmsh API assumptions |
-| `python -m tools.compare_meshers --gmsh` | three research meshers vs Gmsh on a shared boundary |
-| `python -m tools.calibrate collect out/ --csv calibration.csv` | threshold calibration workflow |
-| `python -m tools.make_test_parts models/` | generate the synthetic corpus |
-
----
-
-## Results at a glance
-
-**Synthetic corpus (6 parts):** all six resolved. Five accepted at score 1.000;
-`sliver_block` accepted after the loop enabled healing, which removed two 0.005 mm
-artifact faces and took the mesh from 10,386 triangles to 1,858.
-
-**ABC dataset corpus (46 runs):**
-
-| outcome | count |
-|---|---|
-| accepted | 25 |
-| valid but below target (`score_plateau`) | 13 |
-| over element budget | 6 |
-| stopped for a human decision | 2 |
-| **silent failures** | **0** |
-
-Every run either passed defined criteria or stopped and said why. Corpus spans a
-3,700× scale range and 1–894 faces per part.
-
-The open problem is **element shape**: all 13 plateau cases miss `min_angle`,
-`min_shape` or `max_angle`, and no sizing rule fixes a triangle sitting on a 100:1
-CAD face. See [RESEARCH.md §10.3](RESEARCH.md#103-element-shape-is-the-wall).
-
----
-
-## Requirements
-
-Python 3.12, `gmsh`, `numpy`, `trimesh`, `rtree`, `scipy`; `embreex` optional (~50×
-faster ray casting). `pip install gmsh` ships arm64 wheels with OpenCASCADE built
-in — no Homebrew OCC needed.
+**Research Areas:** Computational Geometry, Finite Element Meshing, Automated Mesh Optimization, AI Agents
